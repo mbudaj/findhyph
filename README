@@ -1,0 +1,23 @@
+# findhyph -- find words hyphenated by TeX in a document
+#
+# Usage: 1) set \tracingparagraphs=1 in TeX document <foo.tex> and run:
+#        2) tex <foo.tex>
+#        3) findhyph [-p] <foo.log>
+#
+# Options: -p
+#              includes also informations about one-letter
+#              prepositions and conjunctions at end of line
+#              (useful for Slovak or Czech language)
+#
+# Output files:
+# <foo.hyph> List of hyphenated words. All punctuation characters are included 
+#            in this list. Page numbers in square brackets refer to first line 
+#            of a paragraph in which the word occurs.
+# <foo.prep> List of prepositions if option -p is used.
+#
+# Copyright (c) Martin Budaj 2000, 2001
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# any later version.

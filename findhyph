@@ -1,133 +1,147 @@
 #!/usr/bin/perl
-
-# Program finds in a log file all words hyphenated by TeX in the 
-# document. Currently, third pass of TeX is not supported.
 #
-# All punctuation characters are included in output list.
+# findhyph -- find words hyphenated by TeX in a document
 #
-# Page numbering is accurate to 1/2 of page
+# Usage: 1) set \tracingparagraphs=1 in TeX document <foo.tex> and run:
+#        2) tex <foo.tex>
+#        3) findhyph [-p] <foo.log>
 #
-# Author: (c) M. Budaj 2000
+# Options: -p
+#              includes also informations about one-letter
+#              prepositions and conjunctions at end of line
+#              (useful for Slovak or Czech language)
+#
+# Output files:
+# <foo.hyph> List of hyphenated words. All punctuation characters are included 
+#            in this list. Page numbers in square brackets refer to first line 
+#            of a paragraph in which the word occurs.
+# <foo.prep> List of prepositions if option -p is used.
+#
+# $Date: 2001/04/08 14:40:23 $
+# $RCSfile: findhyph,v $
+# $Revision: 1.4 $
+#
+# Copyright (c) Martin Budaj 2000, 2001
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# any later version.
 
+die ("Usage: findhyph [-p] <yourtexfile.log>\n") unless $ARGV[0];
 
-use locale;
+use Getopt::Std;
+getopts('p');              # find some prepositions at end of line
 
-die ("Specify TeX's log file!") unless $ARGV[0];
+$filename = $ARGV[0];
+if ($filename =~ /\.(log|tex|dvi|ps|pdf)$/) {
+  $filename = $`;
+}
+open(IN, "$filename.log") or die ("Can't read $filename.log: $!\n");
+open(O1, ">$filename.hyph") or die ("Can't write $filename.hyph: $!\n");
+if ($opt_p) {
+  open(O2, ">$filename.prep") or die ("Can't write $filename.prep: $!\n");
+}
 
-open(IN, "$ARGV[0]") or die ("Can't open input file!");
-open(OUT, ">hyph") or die ("Can't open output file!");
-
-#open(LOG, ">log");
-
-$infirst = $insecond = 0;
-$lastpageno = 0;
+$search = 0;                # 0 no search, 1 prepositions, 2 hyphens, 3 both
+$write_hyph_page = 0;
+$write_prep_page = 0;
 $act_text = "";
 
 while(<IN>) {
   chomp;
-  if (/\@firstpass/) {
-    $infirst = 1;
-    next;
-  }
-  if ($insecond && $_ eq "") {
-    $max_break = $act_break;
-    if ($pageno>$lastpageno) {
-      print OUT "[in page $pageno]\n\n";
-      $lastpageno = $pageno;
+  if (/^\@firstpass$/) {
+    if ($opt_p) {
+      $search = 1;
+      $act_break = 0;
+      $act_text = "";
+      @USED = ();
+      %BREAKS = ();
     }
-    do_hyph();
-    $infirst = $insecond = 0;
     next;
   }
-  if (/\@secondpass/) {
-    $insecond = 1;
+  if ($search && $_ eq "") {
+    $max_break = $act_break;
+    do_hyph();
+    $search = 0;
+    next;
+  }
+  if (/^\@secondpass$/) {
+    $search += 2;
     $act_break = 0;
+    $act_text = "";
     @USED = ();
     %BREAKS = ();
     next;
   }
-  if ($insecond && /^@@(\d+)/) {
+  if ($search && /^@@(\d+)/) {
     $act_break = $1;
-    $prev_break = $act_break - 1;
     /@@(\d+)$/; $BREAKS{$act_break}{'prev'} = $1;
 
-    if (($act_text ne "") and ($act_text ne " ")) {
-      $act_text =~ /\s*(\S+( |-))$/; $text_before = $1;
-      $act_text =~ /^(\S+( |-))/; $text_aft_prev = $1;
-    } 
-    else {
-      $text_before = $text_aft_prev = "";
-    }
-
-    $BREAKS{$act_break}{'txt_before'} = $text_before;
-    $BREAKS{$prev_break}{'txt_after'} = $text_aft_prev;
+    $act_text .= "\@$act_break\@";
     
-    if ($act_text eq $text_before) {
-      $BREAKS{$act_break}{'onesyl'} = 1;
-    }
-    
-    $act_text = "";
     next;
   }
-  if ($insecond && /^@/) {
+  if ($search && /^@/) {
     next;
   }
-  if ($insecond) {
+  if ($search) {
     $act_text .= $_;
   }
   else {
-    if (/\[(\d+)]/) {
+    if (/\[(\d+)]/) {                             # page number
       $pageno = $1;
+      if ($write_hyph_page) {
+        print O1 "[$pageno]\n\n";
+        $write_hyph_page = 0;
+      }
+      if ($write_prep_page) {
+        print O2 "[$pageno]\n\n";
+        $write_prep_page = 0;
+      }
     }
   }
 }
+
+close(O1);
+close(O2) if $opt_p;
 
 sub do_hyph {
   $br = $max_break;
   while (1) {
     $br = $BREAKS{$br}{'prev'};
+    last if ($br == 0);
     $USED[$br] = 1;
-    last if ($BREAKS{$br}{'prev'} == 0);
+  }
+
+  for $i (1..$max_break-1) {
+    if (not defined $USED[$i]) {
+      $act_text =~ s/\@$i\@//;
+    };
   }
 
   for $i (1..$max_break-1) {
     if (defined $USED[$i]) {
-      if ($BREAKS{$i}{'txt_before'} eq "") {
-        $j = $i;
-        while ($j>0 && $BREAKS{$j}{'txt_before'} eq "") {
-          $j--;
+      if ($search > 1) {                   # hyphenated words
+        if ($act_text =~ /(\S+\@$i\@\S+)/) {        # only hyphenated words
+          $out_text = $1;                           # match this pattern
+          $out_text =~ s/-//g;
+          $out_text =~ s/\@\d+\@/-/g;
+          $out_text =~ s/^-//;                      # very narrow columns
+          $out_text =~ s/\\\w+$//;                  # font change after word
+          print O1 "$out_text\n";
+          $write_hyph_page = 1;
         }
-        $BREAKS{$i}{'txt_before'} = $BREAKS{$j}{'txt_before'};
-        $j--;
       }
-      else {
-        $j = $i-1;
-      }
-      while ($j>0 && $BREAKS{$j}{'txt_before'} =~ /-$|^$/ && 
-              (defined $BREAKS{$j+1}{'onesyl'})) { 
-        $BREAKS{$i}{'txt_before'} = 
-          $BREAKS{$j}{'txt_before'} . $BREAKS{$i}{'txt_before'};
-        $j--;
-      }
-
-        $j = $i;
-      if ($BREAKS{$j}{'txt_after'} !~ /-$|^$/) {
-      }
-      else {
-        while ($j<$max_break && $BREAKS{$j}{'txt_after'} =~ /-$|^$/) {
-          $BREAKS{$i}{'txt_after'} .= $BREAKS{$j}{'txt_after'} if ($j>$i);
-          $j++;
+      if ($search != 2) {                  # prepositions
+        if ($act_text =~ / (\S) \@$i\@/) {
+          $out_text = $1;
+          if ($out_text =~ /[kKsSvVzZoOuUiIA]/) {   # for Slovak and Czech
+            print O2 "$out_text\n";
+            $write_prep_page = 1;
+          }
         }
-        $BREAKS{$i}{'txt_after'} .= $BREAKS{$j}{'txt_after'};
       }
     }
-  }
-  
-  for $i (1..$max_break-1) {
-    $BREAKS{$i}{'txt_before'} =~ s/(\w)-(\w)/\1\2/g;
-    $BREAKS{$i}{'txt_after'} =~ s/(\w)-(\w)/\1\2/g;
-    print OUT "$BREAKS{$i}{'txt_before'}$BREAKS{$i}{'txt_after'}\n" 
-       if (defined $USED[$i] && 
-         ($BREAKS{$i}{'txt_before'} =~ m/\w-$/));
   }
 }
