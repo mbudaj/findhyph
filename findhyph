@@ -1,0 +1,133 @@
+#!/usr/bin/perl
+
+# Program finds in a log file all words hyphenated by TeX in the 
+# document. Currently, third pass of TeX is not supported.
+#
+# All punctuation characters are included in output list.
+#
+# Page numbering is accurate to 1/2 of page
+#
+# Author: (c) M. Budaj 2000
+
+
+use locale;
+
+die ("Specify TeX's log file!") unless $ARGV[0];
+
+open(IN, "$ARGV[0]") or die ("Can't open input file!");
+open(OUT, ">hyph") or die ("Can't open output file!");
+
+#open(LOG, ">log");
+
+$infirst = $insecond = 0;
+$lastpageno = 0;
+$act_text = "";
+
+while(<IN>) {
+  chomp;
+  if (/\@firstpass/) {
+    $infirst = 1;
+    next;
+  }
+  if ($insecond && $_ eq "") {
+    $max_break = $act_break;
+    if ($pageno>$lastpageno) {
+      print OUT "[in page $pageno]\n\n";
+      $lastpageno = $pageno;
+    }
+    do_hyph();
+    $infirst = $insecond = 0;
+    next;
+  }
+  if (/\@secondpass/) {
+    $insecond = 1;
+    $act_break = 0;
+    @USED = ();
+    %BREAKS = ();
+    next;
+  }
+  if ($insecond && /^@@(\d+)/) {
+    $act_break = $1;
+    $prev_break = $act_break - 1;
+    /@@(\d+)$/; $BREAKS{$act_break}{'prev'} = $1;
+
+    if (($act_text ne "") and ($act_text ne " ")) {
+      $act_text =~ /\s*(\S+( |-))$/; $text_before = $1;
+      $act_text =~ /^(\S+( |-))/; $text_aft_prev = $1;
+    } 
+    else {
+      $text_before = $text_aft_prev = "";
+    }
+
+    $BREAKS{$act_break}{'txt_before'} = $text_before;
+    $BREAKS{$prev_break}{'txt_after'} = $text_aft_prev;
+    
+    if ($act_text eq $text_before) {
+      $BREAKS{$act_break}{'onesyl'} = 1;
+    }
+    
+    $act_text = "";
+    next;
+  }
+  if ($insecond && /^@/) {
+    next;
+  }
+  if ($insecond) {
+    $act_text .= $_;
+  }
+  else {
+    if (/\[(\d+)]/) {
+      $pageno = $1;
+    }
+  }
+}
+
+sub do_hyph {
+  $br = $max_break;
+  while (1) {
+    $br = $BREAKS{$br}{'prev'};
+    $USED[$br] = 1;
+    last if ($BREAKS{$br}{'prev'} == 0);
+  }
+
+  for $i (1..$max_break-1) {
+    if (defined $USED[$i]) {
+      if ($BREAKS{$i}{'txt_before'} eq "") {
+        $j = $i;
+        while ($j>0 && $BREAKS{$j}{'txt_before'} eq "") {
+          $j--;
+        }
+        $BREAKS{$i}{'txt_before'} = $BREAKS{$j}{'txt_before'};
+        $j--;
+      }
+      else {
+        $j = $i-1;
+      }
+      while ($j>0 && $BREAKS{$j}{'txt_before'} =~ /-$|^$/ && 
+              (defined $BREAKS{$j+1}{'onesyl'})) { 
+        $BREAKS{$i}{'txt_before'} = 
+          $BREAKS{$j}{'txt_before'} . $BREAKS{$i}{'txt_before'};
+        $j--;
+      }
+
+        $j = $i;
+      if ($BREAKS{$j}{'txt_after'} !~ /-$|^$/) {
+      }
+      else {
+        while ($j<$max_break && $BREAKS{$j}{'txt_after'} =~ /-$|^$/) {
+          $BREAKS{$i}{'txt_after'} .= $BREAKS{$j}{'txt_after'} if ($j>$i);
+          $j++;
+        }
+        $BREAKS{$i}{'txt_after'} .= $BREAKS{$j}{'txt_after'};
+      }
+    }
+  }
+  
+  for $i (1..$max_break-1) {
+    $BREAKS{$i}{'txt_before'} =~ s/(\w)-(\w)/\1\2/g;
+    $BREAKS{$i}{'txt_after'} =~ s/(\w)-(\w)/\1\2/g;
+    print OUT "$BREAKS{$i}{'txt_before'}$BREAKS{$i}{'txt_after'}\n" 
+       if (defined $USED[$i] && 
+         ($BREAKS{$i}{'txt_before'} =~ m/\w-$/));
+  }
+}
