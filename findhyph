@@ -6,7 +6,7 @@ $opt_l = 'kKsSvVzZoOuUiIA';             # defaults for Slovak and Czech
 $opt_c = $opt_f = $opt_h = $opt_v = 0;
 getopts('cfphvl:');
 
-$version_msg = "findhyph version 2.0\n";
+$version_msg = "findhyph version 2.1\n";
 $help_msg = "\nUsage: findhyph [options] <yourtexfile.log>\n" .
             "\n" .
             "Options: -c           display hyphenated words in context\n" .
@@ -63,7 +63,7 @@ while(<IN>) {
     %BREAKS = ();
     next;
   }
-  if ($search && /^@@(\d+).+ t=(\d+) \-\> @@(\d+)/) {
+  if ($search && /^@@(\d+).+ t=\-?(\d+) \-\> @@(\d+)/) {
     $act_break = $1;
     $BREAKS{$act_break}{'prev'} = $3;
     if ($endgraf && $2 < $demerits) {
@@ -294,6 +294,16 @@ hyphenated words can be displayed in context
 =item *
 
 suggestions and testing by Pavel Striz
+
+=back
+
+=head4 2.1 (yyyy--mm-dd)
+
+=over 4
+
+=item *
+
+fixed bug when total paragraph demerits are negative
 
 =back
 
