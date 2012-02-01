@@ -13,6 +13,13 @@ SYNOPSIS
 
     3)  findhyph [options] foo.log
 
+    If you are setting "\looseness=<N>" to optimize paragraphs, you need to
+    pass that information to the file foo.log in a form "@looseness=<N>" (on
+    a separate line). You can use a macro like
+    "\def\setlooseness#1{\immediate\write-1{@looseness=#1}\looseness=#1}"
+    for this purpose. If the paragraph contains material in display math
+    mode, you need to use the macro in all split parts of the paragraph.
+
 OPTIONS
     -c  display hyphenated words in context
 
@@ -53,9 +60,9 @@ HISTORY
     *   public release
 
    2.0 (2009-08-10)
-    *   fixes in line breaks detection algorithm; support for third pass of
-        line breaking algorithm in TeX (positive \emergencystretch); support
-        for discretionary breaks in the first pass
+    *   fixes in line breaks detection algorithm; support for the third pass
+        of line breaking algorithm in TeX (positive \emergencystretch);
+        support for discretionary breaks in the first pass
 
     *   page number detection improved (recognized negative page numbers,
         compound page numbers when "\count1" to "\count9" registers are
@@ -69,8 +76,11 @@ HISTORY
 
     *   suggestions and testing by Pavel Striz
 
-   2.1 (yyyy--mm-dd)
-    *   fixed bug when total paragraph demerits are negative
+   3.0 (2012-02-01)
+    *   fixed a bug when total paragraph demerits are negative
+
+    *   "\looseness" setting is now taken into account (thanks to Karel
+        Horak for identifying the issue)
 
 LICENSE
     This program is free software; you can redistribute it and/or modify it
@@ -79,5 +89,5 @@ LICENSE
     version.
 
 AUTHOR
-    Copyright (c) Martin Budaj <m.b@speleo.sk> 2000, 2001, 2009
+    Copyright (c) Martin Budaj <m.b@speleo.sk> 2000, 2001, 2009, 2012
 
