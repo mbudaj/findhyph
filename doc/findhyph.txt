@@ -16,7 +16,7 @@ SYNOPSIS
     If you are setting "\looseness=<N>" to optimize paragraphs, you need to
     pass that information to the file foo.log in a form "@looseness=<N>" (on
     a separate line). You can use a macro like
-    "\def\setlooseness#1{\immediate\write-1{@looseness=#1}\looseness=#1}"
+    "\def\setlooseness#1{\looseness=#1 \immediate\write-1{@looseness=#1}}"
     for this purpose. If the paragraph contains material in display math
     mode, you need to use the macro in all split parts of the paragraph.
 
@@ -85,6 +85,10 @@ HISTORY
    3.1 (2012-11-03)
     *   fixed displaying of hyphenated ligatures (bug reported by Karel
         Horak)
+
+   3.2 (2012-11-21)
+    *   improved example definition of the "\setlooseness" macro (thanks to
+        Karl Berry)
 
 LICENSE
     This program is free software; you can redistribute it and/or modify it
