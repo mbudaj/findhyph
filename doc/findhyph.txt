@@ -1,5 +1,5 @@
 NAME
-    findhyph -- find words hyphenated by TeX in a document
+    findhyph - find words hyphenated by TeX in a document
 
 INSTALLATION
     Copy findhyph or findhyph.bat (depending on OS used) to a directory
@@ -7,6 +7,11 @@ INSTALLATION
     "/usr/bin/" for Unix-like systems or in PATH when using findhyph.bat.
 
 SYNOPSIS
+    findhyph [options] foo.log
+
+DESCRIPTION
+    To use this program:
+
     1)  set "\tracingparagraphs=1" in a TeX document foo.tex and run:
 
     2)  tex foo.tex
@@ -89,6 +94,9 @@ HISTORY
    3.2 (2012-11-21)
     *   improved example definition of the "\setlooseness" macro (thanks to
         Karl Berry)
+
+   3.3 (2013-06-18)
+    *   fixed the manual page as suggested by Eric S. Raymond
 
 LICENSE
     This program is free software; you can redistribute it and/or modify it
