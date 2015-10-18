@@ -1,5 +1,5 @@
 NAME
-    findhyph - find words hyphenated by TeX in a document
+    findhyph – find words hyphenated by TeX in a document
 
 INSTALLATION
     Copy findhyph or findhyph.bat (depending on OS used) to a directory
@@ -66,7 +66,7 @@ HISTORY
 
    2.0 (2009-08-10)
     *   fixes in line breaks detection algorithm; support for the third pass
-        of line breaking algorithm in TeX (positive \emergencystretch);
+        of line breaking algorithm in TeX (positive "\emergencystretch");
         support for discretionary breaks in the first pass
 
     *   page number detection improved (recognized negative page numbers,
@@ -79,17 +79,17 @@ HISTORY
 
     *   hyphenated words can be displayed in context
 
-    *   suggestions and testing by Pavel Striz
+    *   suggestions and testing by Pavel Stříž
 
    3.0 (2012-02-01)
     *   fixed a bug when total paragraph demerits are negative
 
     *   "\looseness" setting is now taken into account (thanks to Karel
-        Horak for identifying the issue)
+        Horák for identifying the issue)
 
    3.1 (2012-11-03)
     *   fixed displaying of hyphenated ligatures (bug reported by Karel
-        Horak)
+        Horák)
 
    3.2 (2012-11-21)
     *   improved example definition of the "\setlooseness" macro (thanks to
@@ -98,6 +98,12 @@ HISTORY
    3.3 (2013-06-18)
     *   fixed the manual page as suggested by Eric S. Raymond
 
+   3.4 (2015-10-18)
+    *   fixed processing of logs produced using ε-TeX's "\lastlinefit"
+        option (bug reported by Karel Horák)
+
+    *   fixed cross-platform handling of linebreaks in the input file
+
 LICENSE
     This program is free software; you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by the
@@ -105,5 +111,5 @@ LICENSE
     version.
 
 AUTHOR
-    Copyright (c) Martin Budaj <m.b@speleo.sk> 2000, 2001, 2009, 2012
+    Copyright (c) Martin Budaj <m.b@speleo.sk> 2000, 2001, 2009, 2012, 2015
 
